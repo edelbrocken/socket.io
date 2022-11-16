@@ -8,12 +8,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/edelbrocken/socket.io/parser"
 	"github.com/zishang520/engine.io/engine"
 	"github.com/zishang520/engine.io/events"
 	"github.com/zishang520/engine.io/log"
 	"github.com/zishang520/engine.io/types"
 	"github.com/zishang520/engine.io/utils"
-	"github.com/zishang520/socket.io/parser"
 )
 
 var (
