@@ -3,8 +3,8 @@ package socket
 import (
 	"time"
 
+	"github.com/edelbrocken/engine.io/config"
 	"github.com/edelbrocken/socket.io/parser"
-	"github.com/zishang520/engine.io/config"
 )
 
 type ServerOptionsInterface interface {

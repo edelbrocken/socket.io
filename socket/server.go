@@ -16,11 +16,11 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
+	"github.com/edelbrocken/engine.io/engine"
+	"github.com/edelbrocken/engine.io/log"
+	"github.com/edelbrocken/engine.io/types"
+	"github.com/edelbrocken/engine.io/utils"
 	"github.com/edelbrocken/socket.io/parser"
-	"github.com/zishang520/engine.io/engine"
-	"github.com/zishang520/engine.io/log"
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/engine.io/utils"
 )
 
 const clientVersion = "4.5.1"
@@ -180,13 +180,13 @@ func (s *Server) ServeHandler(opts *ServerOptions) http.Handler {
 
 	// merge the options passed to the Socket.IO server
 	opts.Assign(s.opts)
-	// set github.com/zishang520/engine.io path to `/socket.io`
+	// set github.com/edelbrocken/engine.io path to `/socket.io`
 	if opts.GetRawPath() == nil {
 		opts.SetPath(s._path)
 	}
 
 	// initialize engine
-	server_log.Debug("creating github.com/zishang520/engine.io instance with opts %v", opts)
+	server_log.Debug("creating github.com/edelbrocken/engine.io instance with opts %v", opts)
 	s.eio = engine.NewServer(opts)
 	// bind to engine events
 	s.Bind(s.eio)
@@ -223,7 +223,7 @@ func (s *Server) Attach(srv interface{}, opts *ServerOptions) *Server {
 
 	// merge the options passed to the Socket.IO server
 	opts.Assign(s.opts)
-	// set github.com/zishang520/engine.io path to `/socket.io`
+	// set github.com/edelbrocken/engine.io path to `/socket.io`
 	if opts.GetRawPath() == nil {
 		opts.SetPath(s._path)
 	}
@@ -235,7 +235,7 @@ func (s *Server) Attach(srv interface{}, opts *ServerOptions) *Server {
 // Initialize engine
 func (s *Server) initEngine(srv *types.HttpServer, opts interface{}) {
 	// initialize engine
-	server_log.Debug("creating github.com/zishang520/engine.io instance with opts %v", opts)
+	server_log.Debug("creating github.com/edelbrocken/engine.io instance with opts %v", opts)
 	s.eio = engine.Attach(srv, opts)
 
 	// attach static file serving
@@ -350,7 +350,7 @@ func (Server) sendFile(filename string, w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// Binds socket.io to an github.com/zishang520/engine.io instance.
+// Binds socket.io to an github.com/edelbrocken/engine.io instance.
 func (s *Server) Bind(egs engine.Server) *Server {
 	s.engine = egs
 	s.engine.On("connection", s.onconnection)

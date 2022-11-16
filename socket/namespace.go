@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zishang520/engine.io/log"
-	"github.com/zishang520/engine.io/types"
+	"github.com/edelbrocken/engine.io/log"
+	"github.com/edelbrocken/engine.io/types"
 )
 
 var namespace_log = log.NewLog("socket.io:namespace")
