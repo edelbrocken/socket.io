@@ -60,7 +60,7 @@ func (c *Client) setup() {
 
 	c.connectTimeout = utils.SetTimeOut(func() {
 		empty := true
-		c.nsps.Range(func(any, any) bool {
+		c.nsps.Range(func(interface{}, interface{}) bool {
 			empty = false
 			return false
 		})
@@ -74,7 +74,7 @@ func (c *Client) setup() {
 }
 
 // Connects a client to a namespace.
-func (c *Client) connect(name string, auth any) {
+func (c *Client) connect(name string, auth interface{}) {
 	if _, ok := c.server._nsps.Load(name); ok {
 		client_log.Debug("connecting to namespace %s", name)
 		c.doConnect(name, auth)
@@ -97,7 +97,7 @@ func (c *Client) connect(name string, auth any) {
 }
 
 // Connects a client to a namespace.
-func (c *Client) doConnect(name string, auth any) {
+func (c *Client) doConnect(name string, auth interface{}) {
 	nsp := c.server.Of(name, nil)
 	nsp.Add(c, auth, func(socket *Socket) {
 		c.sockets.Store(socket.Id(), socket)
@@ -112,7 +112,7 @@ func (c *Client) doConnect(name string, auth any) {
 }
 
 func (c *Client) _disconnect() {
-	c.sockets.Range(func(id, socket any) bool {
+	c.sockets.Range(func(id, socket interface{}) bool {
 		socket.(*Socket).Disconnect(false)
 		c.sockets.Delete(id)
 		return true
@@ -172,7 +172,7 @@ func (c *Client) WriteToEngine(encodedPackets []types.BufferInterface, opts *Wri
 }
 
 // Called with incoming transport data.
-func (c *Client) ondata(args ...any) {
+func (c *Client) ondata(args ...interface{}) {
 	// error is needed for protocol violations (GH-1880)
 	if err := c.decoder.Add(args[0]); err != nil {
 		client_log.Debug("invalid packet format")
@@ -181,10 +181,10 @@ func (c *Client) ondata(args ...any) {
 }
 
 // Called when parser fully decodes a packet.
-func (c *Client) ondecoded(args ...any) {
+func (c *Client) ondecoded(args ...interface{}) {
 	packet, _ := args[0].(*parser.Packet)
 	var namespace string
-	var authPayload any
+	var authPayload interface{}
 	if c.conn.Protocol() == 3 {
 		if parsed, err := url.Parse(packet.Nsp); err == nil {
 			namespace = parsed.Path
@@ -206,8 +206,8 @@ func (c *Client) ondecoded(args ...any) {
 }
 
 // Handles an error.
-func (c *Client) onerror(args ...any) {
-	c.sockets.Range(func(_, socket any) bool {
+func (c *Client) onerror(args ...interface{}) {
+	c.sockets.Range(func(_, socket interface{}) bool {
 		socket.(*Socket)._onerror(args[0])
 		return true
 	})
@@ -215,12 +215,12 @@ func (c *Client) onerror(args ...any) {
 }
 
 // Called upon transport close.
-func (c *Client) onclose(args ...any) {
+func (c *Client) onclose(args ...interface{}) {
 	client_log.Debug("client close with reason %v", args[0])
 	// ignore a potential subsequent `close` event
 	c.destroy()
 	// `nsps` and `sockets` are cleaned up seamlessly
-	c.sockets.Range(func(id, socket any) bool {
+	c.sockets.Range(func(id, socket interface{}) bool {
 		socket.(*Socket)._onclose(args[0])
 		c.sockets.Delete(id)
 		return true

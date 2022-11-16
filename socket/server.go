@@ -30,7 +30,7 @@ var (
 	server_log  = log.NewLog("socket.io:server")
 )
 
-type ParentNspNameMatchFn *func(string, any, func(error, bool))
+type ParentNspNameMatchFn *func(string, interface{}, func(error, bool))
 
 type Server struct {
 	*StrictEventEmitter
@@ -67,7 +67,7 @@ func (s *Server) Encoder() parser.Encoder {
 	return s.encoder
 }
 
-func NewServer(srv any, opts *ServerOptions) *Server {
+func NewServer(srv interface{}, opts *ServerOptions) *Server {
 	s := &Server{}
 	// @private
 	s._nsps = &sync.Map{}
@@ -112,9 +112,9 @@ func (s *Server) ServeClient() bool {
 }
 
 // Executes the middleware for an incoming namespace not already created on the server.
-func (s *Server) _checkNamespace(name string, auth any, fn func(nsp *Namespace)) {
+func (s *Server) _checkNamespace(name string, auth interface{}, fn func(nsp *Namespace)) {
 	end := true
-	s.parentNsps.Range(func(nextFn any, pnsp any) bool {
+	s.parentNsps.Range(func(nextFn interface{}, pnsp interface{}) bool {
 		status := false
 		(*(nextFn.(ParentNspNameMatchFn)))(name, auth, func(err error, allow bool) {
 			if err != nil || !allow {
@@ -163,7 +163,7 @@ func (s *Server) ConnectTimeout() time.Duration {
 // Sets the adapter for rooms.
 func (s *Server) SetAdapter(v Adapter) *Server {
 	s._adapter = v
-	s._nsps.Range(func(_, nsp any) bool {
+	s._nsps.Range(func(_, nsp interface{}) bool {
 		nsp.(*Namespace)._initAdapter()
 		return true
 	})
@@ -197,12 +197,12 @@ func (s *Server) ServeHandler(opts *ServerOptions) http.Handler {
 }
 
 // Attaches socket.io to a server or port.
-func (s *Server) Listen(srv any, opts *ServerOptions) *Server {
+func (s *Server) Listen(srv interface{}, opts *ServerOptions) *Server {
 	return s.Attach(srv, opts)
 }
 
 // Attaches socket.io to a server or port.
-func (s *Server) Attach(srv any, opts *ServerOptions) *Server {
+func (s *Server) Attach(srv interface{}, opts *ServerOptions) *Server {
 	var server *types.HttpServer
 	switch address := srv.(type) {
 	case string:
@@ -233,7 +233,7 @@ func (s *Server) Attach(srv any, opts *ServerOptions) *Server {
 }
 
 // Initialize engine
-func (s *Server) initEngine(srv *types.HttpServer, opts any) {
+func (s *Server) initEngine(srv *types.HttpServer, opts interface{}) {
 	// initialize engine
 	server_log.Debug("creating engine.io instance with opts %v", opts)
 	s.eio = engine.Attach(srv, opts)
@@ -358,7 +358,7 @@ func (s *Server) Bind(egs engine.Server) *Server {
 }
 
 // Called with each incoming transport connection.
-func (s *Server) onconnection(conns ...any) {
+func (s *Server) onconnection(conns ...interface{}) {
 	conn := conns[0].(engine.Socket)
 	server_log.Debug("incoming connection with id %s", conn.Id())
 	client := NewClient(s, conn)
@@ -368,7 +368,7 @@ func (s *Server) onconnection(conns ...any) {
 }
 
 // Looks up a namespace.
-func (s *Server) Of(name any, fn func(...any)) NamespaceInterface {
+func (s *Server) Of(name interface{}, fn func(...interface{})) NamespaceInterface {
 	switch n := name.(type) {
 	case ParentNspNameMatchFn:
 		parentNsp := NewParentNamespace(s)
@@ -381,7 +381,7 @@ func (s *Server) Of(name any, fn func(...any)) NamespaceInterface {
 	case *regexp.Regexp:
 		parentNsp := NewParentNamespace(s)
 		server_log.Debug("initializing parent namespace %s", parentNsp.Name())
-		nfn := func(nsp string, _ any, next func(error, bool)) {
+		nfn := func(nsp string, _ interface{}, next func(error, bool)) {
 			next(nil, n.MatchString(nsp))
 		}
 		s.parentNsps.Store(ParentNspNameMatchFn(&nfn), parentNsp)
@@ -424,7 +424,7 @@ func (s *Server) Of(name any, fn func(...any)) NamespaceInterface {
 
 // Closes server connection
 func (s *Server) Close(fn func()) {
-	s.sockets.Sockets().Range(func(_ any, socket any) bool {
+	s.sockets.Sockets().Range(func(_ interface{}, socket interface{}) bool {
 		socket.(*Socket)._onclose("server shutting down")
 		return true
 	})
@@ -461,19 +461,19 @@ func (s *Server) Except(room ...string) *BroadcastOperator {
 }
 
 // Sends a `message` event to all clients.
-func (s *Server) Send(args ...any) *Server {
+func (s *Server) Send(args ...interface{}) *Server {
 	s.sockets.Emit("message", args...)
 	return s
 }
 
 // Sends a `message` event to all clients.
-func (s *Server) Write(args ...any) *Server {
+func (s *Server) Write(args ...interface{}) *Server {
 	s.sockets.Emit("message", args...)
 	return s
 }
 
 // Emit a packet to other Socket.IO servers
-func (s *Server) ServerSideEmit(ev string, args ...any) error {
+func (s *Server) ServerSideEmit(ev string, args ...interface{}) error {
 	return s.sockets.ServerSideEmit(ev, args...)
 }
 

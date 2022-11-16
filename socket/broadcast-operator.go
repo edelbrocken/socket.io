@@ -107,12 +107,12 @@ func (b *BroadcastOperator) Timeout(timeout time.Duration) *BroadcastOperator {
 }
 
 // Emits to all clients.
-func (b *BroadcastOperator) Emit(ev string, args ...any) error {
+func (b *BroadcastOperator) Emit(ev string, args ...interface{}) error {
 	if SOCKET_RESERVED_EVENTS.Has(ev) {
 		return errors.New(fmt.Sprintf(`"%s" is a reserved event name`, ev))
 	}
 	// set up packet object
-	data := append([]any{ev}, args...)
+	data := append([]interface{}{ev}, args...)
 	data_len := len(data)
 
 	packet := &parser.Packet{
@@ -120,7 +120,7 @@ func (b *BroadcastOperator) Emit(ev string, args ...any) error {
 		Data: data,
 	}
 
-	ack, withAck := data[data_len-1].(func(error, []any))
+	ack, withAck := data[data_len-1].(func(error, []interface{}))
 
 	if !withAck {
 		b.adapter.Broadcast(packet, &BroadcastOptions{
@@ -135,7 +135,7 @@ func (b *BroadcastOperator) Emit(ev string, args ...any) error {
 	packet.Data = data[:data_len-1]
 
 	timedOut := false
-	responses := []any{}
+	responses := []interface{}{}
 	var responsesMu sync.RWMutex
 	var timeout time.Duration
 
@@ -174,7 +174,7 @@ func (b *BroadcastOperator) Emit(ev string, args ...any) error {
 		atomic.AddUint64(&expectedClientCount, clientCount)
 		atomic.AddInt64(&actualServerCount, 1)
 		checkCompleteness()
-	}, func(clientResponse ...any) {
+	}, func(clientResponse ...interface{}) {
 		// each client sends an acknowledgement
 		responsesMu.Lock()
 		responses = append(responses, clientResponse...)
@@ -241,7 +241,7 @@ type RemoteSocket struct {
 	id        string
 	handshake *Handshake
 	rooms     *types.Set
-	data      any
+	data      interface{}
 
 	operator *BroadcastOperator
 }
@@ -258,7 +258,7 @@ func (r *RemoteSocket) Rooms() *types.Set {
 	return r.rooms
 }
 
-func (r *RemoteSocket) Data() any {
+func (r *RemoteSocket) Data() interface{} {
 	return r.data
 }
 
@@ -274,7 +274,7 @@ func NewRemoteSocket(adapter Adapter, details SocketDetails) *RemoteSocket {
 	return r
 }
 
-func (r *RemoteSocket) Emit(ev string, args ...any) error {
+func (r *RemoteSocket) Emit(ev string, args ...interface{}) error {
 	return r.operator.Emit(ev, args...)
 }
 

@@ -39,7 +39,7 @@ type Handshake struct {
 	// The query object
 	Query *utils.ParameterBag
 	// The auth object
-	Auth any
+	Auth interface{}
 }
 
 type Socket struct {
@@ -51,7 +51,7 @@ type Socket struct {
 	handshake *Handshake
 
 	// Additional information that can be attached to the Socket instance and which will be used in the fetchSockets method
-	data    any
+	data    interface{}
 	data_mu sync.RWMutex
 
 	connected    bool
@@ -62,7 +62,7 @@ type Socket struct {
 	server                *Server
 	adapter               Adapter
 	acks                  *sync.Map
-	fns                   []func([]any, func(error))
+	fns                   []func([]interface{}, func(error))
 	flags                 *BroadcastFlags
 	_anyListeners         []events.Listener
 	_anyOutgoingListeners []events.Listener
@@ -100,21 +100,21 @@ func (s *Socket) Connected() bool {
 	return s.connected
 }
 
-func (s *Socket) Data() any {
+func (s *Socket) Data() interface{} {
 	s.data_mu.RLock()
 	defer s.data_mu.RUnlock()
 
 	return s.data
 }
 
-func (s *Socket) SetData(data any) {
+func (s *Socket) SetData(data interface{}) {
 	s.data_mu.Lock()
 	defer s.data_mu.Unlock()
 
 	s.data = data
 }
 
-func NewSocket(nsp *Namespace, client *Client, auth any) *Socket {
+func NewSocket(nsp *Namespace, client *Client, auth interface{}) *Socket {
 	s := &Socket{}
 	s.StrictEventEmitter = NewStrictEventEmitter()
 	s.nsp = nsp
@@ -124,7 +124,7 @@ func NewSocket(nsp *Namespace, client *Client, auth any) *Socket {
 	s.connected = false
 	s.canJoin = true
 	s.acks = &sync.Map{}
-	s.fns = []func([]any, func(error)){}
+	s.fns = []func([]interface{}, func(error)){}
 	s.flags = &BroadcastFlags{}
 	s.server = nsp.Server()
 	s.adapter = s.nsp.Adapter()
@@ -143,7 +143,7 @@ func NewSocket(nsp *Namespace, client *Client, auth any) *Socket {
 }
 
 // Builds the `handshake` BC object
-func (s *Socket) buildHandshake(auth any) *Handshake {
+func (s *Socket) buildHandshake(auth interface{}) *Handshake {
 	return &Handshake{
 		Headers: s.Request().Headers(),
 		Time:    time.Now().Format("2006-01-02 15:04:05"),
@@ -158,18 +158,18 @@ func (s *Socket) buildHandshake(auth any) *Handshake {
 }
 
 // Emits to this client.
-func (s *Socket) Emit(ev string, args ...any) error {
+func (s *Socket) Emit(ev string, args ...interface{}) error {
 	if SOCKET_RESERVED_EVENTS.Has(ev) {
 		return errors.New(fmt.Sprintf(`"%s" is a reserved event name`, ev))
 	}
-	data := append([]any{ev}, args...)
+	data := append([]interface{}{ev}, args...)
 	data_len := len(data)
 	packet := &parser.Packet{
 		Type: parser.EVENT,
 		Data: data,
 	}
 	// access last argument to see if it's an ACK callback
-	if fn, ok := data[data_len-1].(func(...any)); ok {
+	if fn, ok := data[data_len-1].(func(...interface{})); ok {
 		id := s.nsp.Ids()
 		socket_log.Debug("emitting packet with ack id %d", id)
 		packet.Data = data[:data_len-1]
@@ -185,7 +185,7 @@ func (s *Socket) Emit(ev string, args ...any) error {
 	return nil
 }
 
-func (s *Socket) registerAckCallback(id uint64, ack func(...any)) {
+func (s *Socket) registerAckCallback(id uint64, ack func(...interface{})) {
 	s.flags_mu.RLock()
 	timeout := s.flags.Timeout
 	s.flags_mu.RUnlock()
@@ -198,9 +198,9 @@ func (s *Socket) registerAckCallback(id uint64, ack func(...any)) {
 		s.acks.Delete(id)
 		ack(errors.New("operation has timed out"))
 	}, *timeout)
-	s.acks.Store(id, func(args ...any) {
+	s.acks.Store(id, func(args ...interface{}) {
 		utils.ClearTimeout(timer)
-		ack(append([]any{nil}, args...)...)
+		ack(append([]interface{}{nil}, args...)...)
 	})
 }
 
@@ -220,13 +220,13 @@ func (s *Socket) Except(room ...string) *BroadcastOperator {
 }
 
 // Sends a `message` event.
-func (s *Socket) Send(args ...any) *Socket {
+func (s *Socket) Send(args ...interface{}) *Socket {
 	s.Emit("message", args...)
 	return s
 }
 
 // Sends a `message` event.
-func (s *Socket) Write(args ...any) *Socket {
+func (s *Socket) Write(args ...interface{}) *Socket {
 	s.Emit("message", args...)
 	return s
 }
@@ -284,7 +284,7 @@ func (s *Socket) _onconnect() {
 	} else {
 		s.packet(&parser.Packet{
 			Type: parser.CONNECT,
-			Data: map[string]any{
+			Data: map[string]interface{}{
 				"sid": s.id,
 			},
 		}, nil)
@@ -315,7 +315,7 @@ func (s *Socket) _onpacket(packet *parser.Packet) {
 
 // Called upon event packet.
 func (s *Socket) onevent(packet *parser.Packet) {
-	args := packet.Data.([]any)
+	args := packet.Data.([]interface{})
 	socket_log.Debug("emitting event %v", args)
 	if nil != packet.Id {
 		socket_log.Debug("attaching ack callback to event")
@@ -335,9 +335,9 @@ func (s *Socket) onevent(packet *parser.Packet) {
 }
 
 // Produces an ack callback to emit with an event.
-func (s *Socket) ack(id uint64) func(...any) {
+func (s *Socket) ack(id uint64) func(...interface{}) {
 	sent := int32(0)
-	return func(args ...any) {
+	return func(args ...interface{}) {
 		// prevent double callbacks
 		if atomic.CompareAndSwapInt32(&sent, 0, 1) {
 			socket_log.Debug("sending ack %v", args)
@@ -355,7 +355,7 @@ func (s *Socket) onack(packet *parser.Packet) {
 	if packet.Id != nil {
 		if ack, ok := s.acks.Load(*packet.Id); ok {
 			socket_log.Debug("calling ack %d with %v", *packet.Id, packet.Data)
-			(ack.(func(...any)))(packet.Data.([]any)...)
+			(ack.(func(...interface{})))(packet.Data.([]interface{})...)
 			s.acks.Delete(*packet.Id)
 		} else {
 			socket_log.Debug("bad ack %d", *packet.Id)
@@ -372,7 +372,7 @@ func (s *Socket) ondisconnect() {
 }
 
 // Handles a client error.
-func (s *Socket) _onerror(err any) {
+func (s *Socket) _onerror(err interface{}) {
 	if s.ListenerCount("error") > 0 {
 		s.EmitReserved("error", err)
 	} else {
@@ -382,7 +382,7 @@ func (s *Socket) _onerror(err any) {
 }
 
 // Called upon closing. Called by `Client`.
-func (s *Socket) _onclose(reason any) *Socket {
+func (s *Socket) _onclose(reason interface{}) *Socket {
 	if !s.Connected() {
 		return s
 	}
@@ -409,7 +409,7 @@ func (s *Socket) _cleanup() {
 }
 
 // Produces an `error` packet.
-func (s *Socket) _error(err any) {
+func (s *Socket) _error(err interface{}) {
 	s.packet(&parser.Packet{
 		Type: parser.CONNECT_ERROR,
 		Data: err,
@@ -482,7 +482,7 @@ func (s *Socket) Timeout(timeout time.Duration) *Socket {
 }
 
 // Dispatch incoming event to socket listeners.
-func (s *Socket) dispatch(event []any) {
+func (s *Socket) dispatch(event []interface{}) {
 	socket_log.Debug("dispatching an event %v", event)
 	s.run(event, func(err error) {
 		if err != nil {
@@ -498,7 +498,7 @@ func (s *Socket) dispatch(event []any) {
 }
 
 // Sets up socket middleware.
-func (s *Socket) Use(fn func([]any, func(error))) *Socket {
+func (s *Socket) Use(fn func([]interface{}, func(error))) *Socket {
 	s.fns_mu.Lock()
 	defer s.fns_mu.Unlock()
 
@@ -507,9 +507,9 @@ func (s *Socket) Use(fn func([]any, func(error))) *Socket {
 }
 
 // Executes the middleware for an incoming event.
-func (s *Socket) run(event []any, fn func(err error)) {
+func (s *Socket) run(event []interface{}, fn func(err error)) {
 	s.fns_mu.RLock()
-	fns := append([]func([]any, func(error)){}, s.fns...)
+	fns := append([]func([]interface{}, func(error)){}, s.fns...)
 	s.fns_mu.RUnlock()
 	if length := len(fns); length > 0 {
 		var run func(i int)
@@ -713,7 +713,7 @@ func (s *Socket) notifyOutgoingListeners(packet *parser.Packet) {
 		listeners := append([]events.Listener{}, s._anyOutgoingListeners[:]...)
 		s._anyOutgoingListeners_mu.RUnlock()
 		for _, listener := range listeners {
-			if args, ok := packet.Data.([]any); ok {
+			if args, ok := packet.Data.([]interface{}); ok {
 				listener(args...)
 			} else {
 				listener(packet.Data)

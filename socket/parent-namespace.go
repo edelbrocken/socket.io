@@ -34,7 +34,7 @@ func (p *ParentNamespace) _initAdapter() {
 	p.adapter.SetBroadcast(broadcast)
 }
 
-func (p *ParentNamespace) Emit(ev string, args ...any) error {
+func (p *ParentNamespace) Emit(ev string, args ...interface{}) error {
 	for _, nsp := range p.children.Keys() {
 		nsp.Emit(ev, args...)
 	}

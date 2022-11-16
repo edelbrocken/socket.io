@@ -29,7 +29,7 @@ func NewDecoder() Decoder {
 }
 
 // Decodes an encoded packet string into packet JSON.
-func (d *decoder) Add(data any) error {
+func (d *decoder) Add(data interface{}) error {
 	switch tdata := data.(type) {
 	case string:
 		d.mu.RLock()
@@ -232,7 +232,7 @@ func (d *decoder) decodeString(str types.BufferInterface) (packet *Packet, err e
 
 	// look up json data
 	if str.Len() > 0 {
-		var payload any
+		var payload interface{}
 		if json.NewDecoder(str).Decode(&payload) != nil {
 			return nil, errors.New("invalid payload")
 		}
@@ -246,24 +246,24 @@ func (d *decoder) decodeString(str types.BufferInterface) (packet *Packet, err e
 	return packet, nil
 }
 
-func isPayloadValid(t PacketType, payload any) bool {
+func isPayloadValid(t PacketType, payload interface{}) bool {
 	switch t {
 	case CONNECT:
-		_, ok := payload.(map[string]any)
+		_, ok := payload.(map[string]interface{})
 		return ok
 	case DISCONNECT:
 		return payload == nil
 	case CONNECT_ERROR:
-		_, ok := payload.(map[string]any)
+		_, ok := payload.(map[string]interface{})
 		if !ok {
 			_, ok = payload.(string)
 		}
 		return ok
 	case EVENT, BINARY_EVENT:
-		data, ok := payload.([]any)
+		data, ok := payload.([]interface{})
 		return ok && len(data) > 0
 	case ACK, BINARY_ACK:
-		_, ok := payload.([]any)
+		_, ok := payload.([]interface{})
 		return ok
 	}
 	return false

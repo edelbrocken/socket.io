@@ -14,7 +14,7 @@ type Encoder interface {
 type Decoder interface {
 	events.EventEmitter
 
-	Add(any) error
+	Add(interface{}) error
 	Destroy()
 }
 

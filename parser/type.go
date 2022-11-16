@@ -5,7 +5,7 @@ type PacketType byte
 type Packet struct {
 	Type        PacketType
 	Nsp         string
-	Data        any
+	Data        interface{}
 	Id          *uint64
 	Attachments *uint64
 }

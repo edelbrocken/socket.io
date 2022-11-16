@@ -73,7 +73,7 @@ type Adapter interface {
 	//  - `Flags` {*BroadcastFlags} flags for this packet
 	//  - `Except` {*types.Set[Room]} sids that should be excluded
 	//  - `Rooms` {*types.Set[Room]} list of rooms to broadcast to
-	BroadcastWithAck(*parser.Packet, *BroadcastOptions, func(uint64), func(...any))
+	BroadcastWithAck(*parser.Packet, *BroadcastOptions, func(uint64), func(...interface{}))
 
 	// Gets a list of sockets by sid.
 	Sockets(*types.Set) *types.Set
@@ -82,7 +82,7 @@ type Adapter interface {
 	SocketRooms(string) *types.Set
 
 	// Returns the matching socket instances
-	FetchSockets(*BroadcastOptions) []any
+	FetchSockets(*BroadcastOptions) []interface{}
 
 	// Makes the matching socket instances join the specified rooms
 	AddSockets(*BroadcastOptions, []string)
@@ -94,14 +94,14 @@ type Adapter interface {
 	DisconnectSockets(*BroadcastOptions, bool)
 
 	// Send a packet to the other Socket.IO servers in the cluster
-	ServerSideEmit(string, ...any) error
+	ServerSideEmit(string, ...interface{}) error
 }
 
 type SocketDetails interface {
 	Id() string
 	Handshake() *Handshake
 	Rooms() *types.Set
-	Data() any
+	Data() interface{}
 }
 
 type NamespaceInterface interface {
@@ -109,8 +109,8 @@ type NamespaceInterface interface {
 
 	On(string, ...events.Listener) error
 	Once(string, ...events.Listener) error
-	EmitReserved(string, ...any)
-	EmitUntyped(string, ...any)
+	EmitReserved(string, ...interface{})
+	EmitUntyped(string, ...interface{})
 	Listeners(string) []events.Listener
 
 	Sockets() *sync.Map
@@ -132,19 +132,19 @@ type NamespaceInterface interface {
 	Except(...string) *BroadcastOperator
 
 	// Adds a new client.
-	Add(*Client, any, func(*Socket)) *Socket
+	Add(*Client, interface{}, func(*Socket)) *Socket
 
 	// Emits to all clients.
-	Emit(string, ...any) error
+	Emit(string, ...interface{}) error
 
 	// Sends a `message` event to all clients.
-	Send(...any) NamespaceInterface
+	Send(...interface{}) NamespaceInterface
 
 	// Sends a `message` event to all clients.
-	Write(...any) NamespaceInterface
+	Write(...interface{}) NamespaceInterface
 
 	// Emit a packet to other Socket.IO servers
-	ServerSideEmit(string, ...any) error
+	ServerSideEmit(string, ...interface{}) error
 
 	// Gets a list of clients.
 	AllSockets() (*types.Set, error)
