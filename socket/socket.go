@@ -150,7 +150,7 @@ func (s *Socket) buildHandshake(auth interface{}) *Handshake {
 		Address: s.Conn().RemoteAddress(),
 		Xdomain: s.Request().Headers().Peek("Origin") != "",
 		Secure:  s.Request().Secure(),
-		Issued:  time.Now().UnixMilli(),
+		Issued:  time.Now().UnixNano() / 1e6,
 		Url:     s.Request().Request().RequestURI,
 		Query:   s.Request().Query(),
 		Auth:    auth,
