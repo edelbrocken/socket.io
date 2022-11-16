@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	"socket.io/parser"
+	"github.com/edelbrocken/socket.io/parser"
 )
 
 var count uint64 = 0

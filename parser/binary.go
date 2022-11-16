@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"engine.io/types"
+	"github.com/edelbrocken/engine.io/types"
 	"github.com/mitchellh/mapstructure"
 )
 

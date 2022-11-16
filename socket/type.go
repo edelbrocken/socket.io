@@ -4,10 +4,10 @@ import (
 	"sync"
 	"time"
 
-	"engine.io/events"
-	"engine.io/packet"
-	"engine.io/types"
-	"socket.io/parser"
+	"github.com/edelbrocken/engine.io/events"
+	"github.com/edelbrocken/engine.io/packet"
+	"github.com/edelbrocken/engine.io/types"
+	"github.com/edelbrocken/socket.io/parser"
 )
 
 type WriteOptions struct {

@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"engine.io/types"
+	"github.com/edelbrocken/engine.io/types"
 )
 
 // Returns true if obj is a Buffer or a File.
