@@ -3,7 +3,7 @@ package socket
 import (
 	"time"
 
-	"github.com/edelbrocken/engine.io/config"
+	"github.com/zishang520/engine.io/config"
 	"github.com/zishang520/socket.io/parser"
 )
 

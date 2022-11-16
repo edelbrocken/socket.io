@@ -8,11 +8,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/edelbrocken/engine.io/engine"
-	"github.com/edelbrocken/engine.io/events"
-	"github.com/edelbrocken/engine.io/log"
-	"github.com/edelbrocken/engine.io/types"
-	"github.com/edelbrocken/engine.io/utils"
+	"github.com/zishang520/engine.io/engine"
+	"github.com/zishang520/engine.io/events"
+	"github.com/zishang520/engine.io/log"
+	"github.com/zishang520/engine.io/types"
+	"github.com/zishang520/engine.io/utils"
 	"github.com/zishang520/socket.io/parser"
 )
 

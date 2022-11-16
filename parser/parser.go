@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"github.com/edelbrocken/engine.io/events"
-	"github.com/edelbrocken/engine.io/types"
+	"github.com/zishang520/engine.io/events"
+	"github.com/zishang520/engine.io/types"
 )
 
 // A socket.io Encoder instance
