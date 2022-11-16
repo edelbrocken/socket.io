@@ -9,7 +9,7 @@ import (
 
 	"github.com/edelbrocken/engine.io/types"
 	"github.com/edelbrocken/engine.io/utils"
-	"github.com/edelbrocken/socket.io/parser"
+	"github.com/zishang520/socket.io/parser"
 )
 
 type BroadcastOperator struct {

@@ -1,4 +1,4 @@
-module github.com/edelbrocken/socket.io
+module github.com/zishang520/socket.io
 
 go 1.16
 
