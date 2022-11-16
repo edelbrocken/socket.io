@@ -4,11 +4,11 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/zishang520/engine.io/engine"
-	"github.com/zishang520/engine.io/log"
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/engine.io/utils"
-	"github.com/zishang520/socket.io/parser"
+	"engine.io/engine"
+	"engine.io/log"
+	"engine.io/types"
+	"engine.io/utils"
+	"socket.io/parser"
 )
 
 var client_log = log.NewLog("socket.io:client")

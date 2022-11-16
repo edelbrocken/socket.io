@@ -8,12 +8,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zishang520/engine.io/engine"
-	"github.com/zishang520/engine.io/events"
-	"github.com/zishang520/engine.io/log"
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/engine.io/utils"
-	"github.com/zishang520/socket.io/parser"
+	"engine.io/engine"
+	"engine.io/events"
+	"engine.io/log"
+	"engine.io/types"
+	"engine.io/utils"
+	"socket.io/parser"
 )
 
 var (
@@ -47,7 +47,7 @@ type Socket struct {
 
 	nsp       *Namespace
 	client    *Client
-	id        SocketId
+	id        string
 	handshake *Handshake
 
 	// Additional information that can be attached to the Socket instance and which will be used in the fetchSockets method
@@ -77,7 +77,7 @@ func (s *Socket) Nsp() *Namespace {
 	return s.nsp
 }
 
-func (s *Socket) Id() SocketId {
+func (s *Socket) Id() string {
 	return s.id
 }
 
@@ -130,13 +130,13 @@ func NewSocket(nsp *Namespace, client *Client, auth any) *Socket {
 	s.adapter = s.nsp.Adapter()
 	if client.conn.Protocol() == 3 {
 		if name := nsp.Name(); name != "/" {
-			s.id = SocketId(name + "#" + client.id)
+			s.id = string(name + "#" + client.id)
 		} else {
-			s.id = SocketId(client.id)
+			s.id = string(client.id)
 		}
 	} else {
 		id, _ := utils.Base64Id().GenerateId()
-		s.id = SocketId(id) // don't reuse the Engine.IO id because it's sensitive information
+		s.id = string(id) // don't reuse the Engine.IO id because it's sensitive information
 	}
 	s.handshake = s.buildHandshake(auth)
 	return s
@@ -205,17 +205,17 @@ func (s *Socket) registerAckCallback(id uint64, ack func(...any)) {
 }
 
 // Targets a room when broadcasting.
-func (s *Socket) To(room ...Room) *BroadcastOperator {
+func (s *Socket) To(room ...string) *BroadcastOperator {
 	return s.newBroadcastOperator().To(room...)
 }
 
 // Targets a room when broadcasting.
-func (s *Socket) In(room ...Room) *BroadcastOperator {
+func (s *Socket) In(room ...string) *BroadcastOperator {
 	return s.newBroadcastOperator().In(room...)
 }
 
 // Excludes a room when broadcasting.
-func (s *Socket) Except(room ...Room) *BroadcastOperator {
+func (s *Socket) Except(room ...string) *BroadcastOperator {
 	return s.newBroadcastOperator().Except(room...)
 }
 
@@ -242,7 +242,7 @@ func (s *Socket) packet(packet *parser.Packet, opts *BroadcastFlags) {
 }
 
 // Joins a room.
-func (s *Socket) Join(rooms ...Room) {
+func (s *Socket) Join(rooms ...string) {
 	s.canJoin_mu.Lock()
 	if !s.canJoin {
 		defer s.canJoin_mu.Unlock()
@@ -255,7 +255,7 @@ func (s *Socket) Join(rooms ...Room) {
 }
 
 // Leaves a room.
-func (s *Socket) Leave(room Room) {
+func (s *Socket) Leave(room string) {
 	socket_log.Debug("leave room %s", room)
 	s.adapter.Del(s.id, room)
 }
@@ -276,7 +276,7 @@ func (s *Socket) _onconnect() {
 	s.connected = true
 	s.connected_mu.Unlock()
 
-	s.Join(Room(s.id))
+	s.Join(string(s.id))
 	if s.Conn().Protocol() == 3 {
 		s.packet(&parser.Packet{
 			Type: parser.CONNECT,
@@ -550,11 +550,11 @@ func (s *Socket) Conn() engine.Socket {
 	return s.client.conn
 }
 
-func (s *Socket) Rooms() *types.Set[Room] {
+func (s *Socket) Rooms() *types.Set {
 	if rooms := s.adapter.SocketRooms(s.id); rooms != nil {
 		return rooms
 	}
-	return types.NewSet[Room]()
+	return types.NewSet()
 }
 
 // Adds a listener that will be fired when any event is received. The event name is passed as the first argument to
@@ -732,5 +732,5 @@ func (s *Socket) newBroadcastOperator() *BroadcastOperator {
 	flags := *s.flags
 	s.flags = &BroadcastFlags{}
 	s.flags_mu.Unlock()
-	return NewBroadcastOperator(s.adapter, types.NewSet[Room](), types.NewSet[Room](Room(s.id)), &flags)
+	return NewBroadcastOperator(s.adapter, types.NewSet(), types.NewSet(s.id), &flags)
 }

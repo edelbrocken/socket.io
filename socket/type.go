@@ -4,15 +4,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zishang520/engine.io/events"
-	"github.com/zishang520/engine.io/packet"
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/socket.io/parser"
+	"engine.io/events"
+	"engine.io/packet"
+	"engine.io/types"
+	"socket.io/parser"
 )
-
-type SocketId string
-
-type Room string
 
 type WriteOptions struct {
 	packet.Options
@@ -32,8 +28,8 @@ type BroadcastFlags struct {
 }
 
 type BroadcastOptions struct {
-	Rooms  *types.Set[Room]
-	Except *types.Set[Room]
+	Rooms  *types.Set
+	Except *types.Set
 	Flags  *BroadcastFlags
 }
 
@@ -54,13 +50,13 @@ type Adapter interface {
 	ServerCount() int64
 
 	// Adds a socket to a list of room.
-	AddAll(SocketId, *types.Set[Room])
+	AddAll(string, *types.Set)
 
 	// Removes a socket from a room.
-	Del(SocketId, Room)
+	Del(string, string)
 
 	// Removes a socket from all rooms it's joined.
-	DelAll(SocketId)
+	DelAll(string)
 
 	SetBroadcast(func(*parser.Packet, *BroadcastOptions))
 	// Broadcasts a packet.
@@ -80,19 +76,19 @@ type Adapter interface {
 	BroadcastWithAck(*parser.Packet, *BroadcastOptions, func(uint64), func(...any))
 
 	// Gets a list of sockets by sid.
-	Sockets(*types.Set[Room]) *types.Set[SocketId]
+	Sockets(*types.Set) *types.Set
 
 	// Gets the list of rooms a given socket has joined.
-	SocketRooms(SocketId) *types.Set[Room]
+	SocketRooms(string) *types.Set
 
 	// Returns the matching socket instances
 	FetchSockets(*BroadcastOptions) []any
 
 	// Makes the matching socket instances join the specified rooms
-	AddSockets(*BroadcastOptions, []Room)
+	AddSockets(*BroadcastOptions, []string)
 
 	// Makes the matching socket instances leave the specified rooms
-	DelSockets(*BroadcastOptions, []Room)
+	DelSockets(*BroadcastOptions, []string)
 
 	// Makes the matching socket instances disconnect
 	DisconnectSockets(*BroadcastOptions, bool)
@@ -102,9 +98,9 @@ type Adapter interface {
 }
 
 type SocketDetails interface {
-	Id() SocketId
+	Id() string
 	Handshake() *Handshake
-	Rooms() *types.Set[Room]
+	Rooms() *types.Set
 	Data() any
 }
 
@@ -127,13 +123,13 @@ type NamespaceInterface interface {
 	Use(func(*Socket, func(*ExtendedError))) NamespaceInterface
 
 	// Targets a room when emitting.
-	To(...Room) *BroadcastOperator
+	To(...string) *BroadcastOperator
 
 	// Targets a room when emitting.
-	In(...Room) *BroadcastOperator
+	In(...string) *BroadcastOperator
 
 	// Excludes a room when emitting.
-	Except(...Room) *BroadcastOperator
+	Except(...string) *BroadcastOperator
 
 	// Adds a new client.
 	Add(*Client, any, func(*Socket)) *Socket
@@ -151,7 +147,7 @@ type NamespaceInterface interface {
 	ServerSideEmit(string, ...any) error
 
 	// Gets a list of clients.
-	AllSockets() (*types.Set[SocketId], error)
+	AllSockets() (*types.Set, error)
 
 	// Sets the compress flag.
 	Compress(bool) *BroadcastOperator
@@ -179,10 +175,10 @@ type NamespaceInterface interface {
 	FetchSockets() ([]*RemoteSocket, error)
 
 	// Makes the matching socket instances join the specified rooms
-	SocketsJoin(...Room)
+	SocketsJoin(...string)
 
 	// Makes the matching socket instances leave the specified rooms
-	SocketsLeave(...Room)
+	SocketsLeave(...string)
 
 	// Makes the matching socket instances disconnect
 	DisconnectSockets(bool)

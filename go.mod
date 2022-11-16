@@ -1,18 +1,16 @@
-module github.com/zishang520/socket.io
+module socket.io
 
-go 1.18
+go 1.16
 
 retract v1.0.8
 
 require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/zishang520/engine.io v1.2.0
 )
 
 require (
-	github.com/gookit/color v1.5.0 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
-	golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44 // indirect
+	engine.io v0.0.0
 )
+
+replace engine.io => ../engine.io

@@ -3,7 +3,7 @@ package parser
 import (
 	"sync"
 
-	"github.com/zishang520/engine.io/types"
+	"engine.io/types"
 )
 
 // Protocol version.

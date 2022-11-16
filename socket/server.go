@@ -15,12 +15,12 @@ import (
 	"sync"
 	"time"
 
+	"engine.io/engine"
+	"engine.io/log"
+	"engine.io/types"
+	"engine.io/utils"
 	"github.com/andybalholm/brotli"
-	"github.com/zishang520/engine.io/engine"
-	"github.com/zishang520/engine.io/log"
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/engine.io/utils"
-	"github.com/zishang520/socket.io/parser"
+	"socket.io/parser"
 )
 
 const clientVersion = "4.5.1"
@@ -446,17 +446,17 @@ func (s *Server) Use(fn func(*Socket, func(*ExtendedError))) *Server {
 }
 
 // Targets a room when emitting.
-func (s *Server) To(room ...Room) *BroadcastOperator {
+func (s *Server) To(room ...string) *BroadcastOperator {
 	return s.sockets.To(room...)
 }
 
 // Targets a room when emitting.
-func (s *Server) In(room ...Room) *BroadcastOperator {
+func (s *Server) In(room ...string) *BroadcastOperator {
 	return s.sockets.In(room...)
 }
 
 // Excludes a room when emitting.
-func (s *Server) Except(room ...Room) *BroadcastOperator {
+func (s *Server) Except(room ...string) *BroadcastOperator {
 	return s.sockets.Except(room...)
 }
 
@@ -478,7 +478,7 @@ func (s *Server) ServerSideEmit(ev string, args ...any) error {
 }
 
 // Gets a list of socket ids.
-func (s *Server) AllSockets() (*types.Set[SocketId], error) {
+func (s *Server) AllSockets() (*types.Set, error) {
 	return s.sockets.AllSockets()
 }
 
@@ -518,12 +518,12 @@ func (s *Server) FetchSockets() ([]*RemoteSocket, error) {
 }
 
 // Makes the matching socket instances join the specified rooms
-func (s *Server) SocketsJoin(room ...Room) {
+func (s *Server) SocketsJoin(room ...string) {
 	s.sockets.SocketsJoin(room...)
 }
 
 // Makes the matching socket instances leave the specified rooms
-func (s *Server) SocketsLeave(room ...Room) {
+func (s *Server) SocketsLeave(room ...string) {
 	s.sockets.SocketsLeave(room...)
 }
 

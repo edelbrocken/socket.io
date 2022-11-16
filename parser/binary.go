@@ -4,8 +4,8 @@ import (
 	"errors"
 	"io"
 
+	"engine.io/types"
 	"github.com/mitchellh/mapstructure"
-	"github.com/zishang520/engine.io/types"
 )
 
 type Placeholder struct {

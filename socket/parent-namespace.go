@@ -5,8 +5,7 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/socket.io/parser"
+	"socket.io/parser"
 )
 
 var count uint64 = 0
@@ -14,13 +13,13 @@ var count uint64 = 0
 type ParentNamespace struct {
 	*Namespace
 
-	children *types.Set[*Namespace]
+	children *Set
 }
 
 func NewParentNamespace(server *Server) *ParentNamespace {
 	p := &ParentNamespace{}
 	p.Namespace = NewNamespace(server, "/_"+strconv.FormatUint(atomic.AddUint64(&count, 1), 10))
-	p.children = types.NewSet[*Namespace]()
+	p.children = NewSet()
 	p._initAdapter()
 
 	return p

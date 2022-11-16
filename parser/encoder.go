@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zishang520/engine.io/types"
+	"engine.io/types"
 )
 
 // A socket.io Encoder instance

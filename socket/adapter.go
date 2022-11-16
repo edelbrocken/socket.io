@@ -4,10 +4,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/zishang520/engine.io/events"
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/engine.io/utils"
-	"github.com/zishang520/socket.io/parser"
+	"engine.io/events"
+	"engine.io/types"
+	"engine.io/utils"
+	"socket.io/parser"
 )
 
 type adapter struct {
@@ -59,34 +59,34 @@ func (a *adapter) ServerCount() int64 {
 }
 
 // Adds a socket to a list of room.
-func (a *adapter) AddAll(id SocketId, rooms *types.Set[Room]) {
-	_rooms, _ := a.sids.LoadOrStore(id, types.NewSet[Room]())
+func (a *adapter) AddAll(id string, rooms *types.Set) {
+	_rooms, _ := a.sids.LoadOrStore(id, types.NewSet())
 	for _, room := range rooms.Keys() {
-		_rooms.(*types.Set[Room]).Add(room)
-		ids, ok := a.rooms.LoadOrStore(room, types.NewSet[SocketId]())
+		_rooms.(*types.Set).Add(room)
+		ids, ok := a.rooms.LoadOrStore(room, types.NewSet())
 		if !ok {
 			a.Emit("create-room", room)
 		}
-		if !ids.(*types.Set[SocketId]).Has(id) {
-			ids.(*types.Set[SocketId]).Add(id)
+		if !ids.(*types.Set).Has(string(id)) {
+			ids.(*types.Set).Add(string(id))
 			a.Emit("join-room", room, id)
 		}
 	}
 }
 
 // Removes a socket from a room.
-func (a *adapter) Del(id SocketId, room Room) {
+func (a *adapter) Del(id string, room string) {
 	if rooms, ok := a.sids.Load(id); ok {
-		rooms.(*types.Set[Room]).Delete(room)
+		rooms.(*types.Set).Delete(string(room))
 	}
 	a._del(room, id)
 }
-func (a *adapter) _del(room Room, id SocketId) {
+func (a *adapter) _del(room string, id string) {
 	if ids, ok := a.rooms.Load(room); ok {
-		if ids.(*types.Set[SocketId]).Delete(id) {
+		if ids.(*types.Set).Delete(string(id)) {
 			a.Emit("leave-room", room, id)
 		}
-		if ids.(*types.Set[SocketId]).Len() == 0 {
+		if ids.(*types.Set).Len() == 0 {
 			if _, ok := a.rooms.LoadAndDelete(room); ok {
 				a.Emit("delete-room", room)
 			}
@@ -95,10 +95,10 @@ func (a *adapter) _del(room Room, id SocketId) {
 }
 
 // Removes a socket from all rooms it's joined.
-func (a *adapter) DelAll(id SocketId) {
+func (a *adapter) DelAll(id string) {
 	if rooms, ok := a.sids.Load(id); ok {
-		for _, room := range rooms.(*types.Set[Room]).Keys() {
-			a._del(room, id)
+		for _, room := range rooms.(*types.Set).Keys() {
+			a._del(string(room), id)
 		}
 		a.sids.Delete(id)
 	}
@@ -182,18 +182,18 @@ func (a *adapter) BroadcastWithAck(packet *parser.Packet, opts *BroadcastOptions
 }
 
 // Gets a list of sockets by sid.
-func (a *adapter) Sockets(rooms *types.Set[Room]) *types.Set[SocketId] {
-	sids := types.NewSet[SocketId]()
+func (a *adapter) Sockets(rooms *types.Set) *types.Set {
+	sids := types.NewSet()
 	a.apply(&BroadcastOptions{Rooms: rooms}, func(socket *Socket) {
-		sids.Add(socket.Id())
+		sids.Add(string(socket.Id()))
 	})
 	return sids
 }
 
 // Gets the list of rooms a given socket has joined.
-func (a *adapter) SocketRooms(id SocketId) *types.Set[Room] {
+func (a *adapter) SocketRooms(id string) *types.Set {
 	if rooms, ok := a.sids.Load(id); ok {
-		return rooms.(*types.Set[Room])
+		return rooms.(*types.Set)
 	}
 	return nil
 }
@@ -207,14 +207,14 @@ func (a *adapter) FetchSockets(opts *BroadcastOptions) (sockets []any) {
 }
 
 // Makes the matching socket instances join the specified rooms
-func (a *adapter) AddSockets(opts *BroadcastOptions, rooms []Room) {
+func (a *adapter) AddSockets(opts *BroadcastOptions, rooms []string) {
 	a.apply(opts, func(socket *Socket) {
 		socket.Join(rooms...)
 	})
 }
 
 // Makes the matching socket instances leave the specified rooms
-func (a *adapter) DelSockets(opts *BroadcastOptions, rooms []Room) {
+func (a *adapter) DelSockets(opts *BroadcastOptions, rooms []string) {
 	a.apply(opts, func(socket *Socket) {
 		for _, room := range rooms {
 			socket.Leave(room)
@@ -233,10 +233,10 @@ func (a *adapter) apply(opts *BroadcastOptions, callback func(*Socket)) {
 	rooms := opts.Rooms
 	except := a.computeExceptSids(opts.Except)
 	if rooms != nil && rooms.Len() > 0 {
-		ids := types.NewSet[SocketId]()
+		ids := types.NewSet()
 		for _, room := range rooms.Keys() {
 			if _ids, ok := a.rooms.Load(room); ok {
-				for _, id := range _ids.(*types.Set[SocketId]).Keys() {
+				for _, id := range _ids.(*types.Set).Keys() {
 					if ids.Has(id) || except.Has(id) {
 						continue
 					}
@@ -249,7 +249,7 @@ func (a *adapter) apply(opts *BroadcastOptions, callback func(*Socket)) {
 		}
 	} else {
 		a.sids.Range(func(id any, _ any) bool {
-			if except.Has(id.(SocketId)) {
+			if except.Has(id.(string)) {
 				return true
 			}
 			if socket, ok := a.nsp.Sockets().Load(id); ok {
@@ -260,12 +260,12 @@ func (a *adapter) apply(opts *BroadcastOptions, callback func(*Socket)) {
 	}
 }
 
-func (a *adapter) computeExceptSids(exceptRooms *types.Set[Room]) *types.Set[SocketId] {
-	exceptSids := types.NewSet[SocketId]()
+func (a *adapter) computeExceptSids(exceptRooms *types.Set) *types.Set {
+	exceptSids := types.NewSet()
 	if exceptRooms != nil && exceptRooms.Len() > 0 {
 		for _, room := range exceptRooms.Keys() {
 			if ids, ok := a.rooms.Load(room); ok {
-				exceptSids.Add(ids.(*types.Set[SocketId]).Keys()...)
+				exceptSids.Add(ids.(*types.Set).Keys()...)
 			}
 		}
 	}

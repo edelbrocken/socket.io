@@ -7,28 +7,28 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zishang520/engine.io/types"
-	"github.com/zishang520/engine.io/utils"
-	"github.com/zishang520/socket.io/parser"
+	"engine.io/types"
+	"engine.io/utils"
+	"socket.io/parser"
 )
 
 type BroadcastOperator struct {
 	adapter     Adapter
-	rooms       *types.Set[Room]
-	exceptRooms *types.Set[Room]
+	rooms       *types.Set
+	exceptRooms *types.Set
 	flags       *BroadcastFlags
 }
 
-func NewBroadcastOperator(adapter Adapter, rooms *types.Set[Room], exceptRooms *types.Set[Room], flags *BroadcastFlags) *BroadcastOperator {
+func NewBroadcastOperator(adapter Adapter, rooms *types.Set, exceptRooms *types.Set, flags *BroadcastFlags) *BroadcastOperator {
 	b := &BroadcastOperator{}
 	b.adapter = adapter
 	if rooms == nil {
-		b.rooms = types.NewSet[Room]()
+		b.rooms = types.NewSet()
 	} else {
 		b.rooms = rooms
 	}
 	if exceptRooms == nil {
-		b.exceptRooms = types.NewSet[Room]()
+		b.exceptRooms = types.NewSet()
 	} else {
 		b.exceptRooms = exceptRooms
 	}
@@ -42,21 +42,29 @@ func NewBroadcastOperator(adapter Adapter, rooms *types.Set[Room], exceptRooms *
 }
 
 // Targets a room when emitting.
-func (b *BroadcastOperator) To(room ...Room) *BroadcastOperator {
+func (b *BroadcastOperator) To(room ...string) *BroadcastOperator {
+	tmp := make([]string, 0, len(room))
+	for _, v := range room {
+		tmp = append(tmp, string(v))
+	}
 	rooms := types.NewSet(b.rooms.Keys()...)
-	rooms.Add(room...)
+	rooms.Add(tmp...)
 	return NewBroadcastOperator(b.adapter, rooms, b.exceptRooms, b.flags)
 }
 
 // Targets a room when emitting.
-func (b *BroadcastOperator) In(room ...Room) *BroadcastOperator {
+func (b *BroadcastOperator) In(room ...string) *BroadcastOperator {
 	return b.To(room...)
 }
 
 // Excludes a room when emitting.
-func (b *BroadcastOperator) Except(room ...Room) *BroadcastOperator {
+func (b *BroadcastOperator) Except(room ...string) *BroadcastOperator {
+	tmp := make([]string, 0, len(room))
+	for _, v := range room {
+		tmp = append(tmp, string(v))
+	}
 	exceptRooms := types.NewSet(b.exceptRooms.Keys()...)
-	exceptRooms.Add(room...)
+	exceptRooms.Add(tmp...)
 	return NewBroadcastOperator(b.adapter, b.rooms, exceptRooms, b.flags)
 }
 
@@ -179,7 +187,7 @@ func (b *BroadcastOperator) Emit(ev string, args ...any) error {
 }
 
 // Gets a list of clients.
-func (b *BroadcastOperator) AllSockets() (*types.Set[SocketId], error) {
+func (b *BroadcastOperator) AllSockets() (*types.Set, error) {
 	if b.adapter == nil {
 		return nil, errors.New("No adapter for this namespace, are you trying to get the list of clients of a dynamic namespace?")
 	}
@@ -203,7 +211,7 @@ func (b *BroadcastOperator) FetchSockets() (remoteSockets []*RemoteSocket) {
 }
 
 // Makes the matching socket instances join the specified rooms
-func (b *BroadcastOperator) SocketsJoin(room ...Room) {
+func (b *BroadcastOperator) SocketsJoin(room ...string) {
 	b.adapter.AddSockets(&BroadcastOptions{
 		Rooms:  b.rooms,
 		Except: b.exceptRooms,
@@ -212,7 +220,7 @@ func (b *BroadcastOperator) SocketsJoin(room ...Room) {
 }
 
 // Makes the matching socket instances leave the specified rooms
-func (b *BroadcastOperator) SocketsLeave(room ...Room) {
+func (b *BroadcastOperator) SocketsLeave(room ...string) {
 	b.adapter.DelSockets(&BroadcastOptions{
 		Rooms:  b.rooms,
 		Except: b.exceptRooms,
@@ -230,15 +238,15 @@ func (b *BroadcastOperator) DisconnectSockets(status bool) {
 }
 
 type RemoteSocket struct {
-	id        SocketId
+	id        string
 	handshake *Handshake
-	rooms     *types.Set[Room]
+	rooms     *types.Set
 	data      any
 
 	operator *BroadcastOperator
 }
 
-func (r *RemoteSocket) Id() SocketId {
+func (r *RemoteSocket) Id() string {
 	return r.id
 }
 
@@ -246,7 +254,7 @@ func (r *RemoteSocket) Handshake() *Handshake {
 	return r.handshake
 }
 
-func (r *RemoteSocket) Rooms() *types.Set[Room] {
+func (r *RemoteSocket) Rooms() *types.Set {
 	return r.rooms
 }
 
@@ -261,7 +269,7 @@ func NewRemoteSocket(adapter Adapter, details SocketDetails) *RemoteSocket {
 	r.handshake = details.Handshake()
 	r.rooms = types.NewSet(details.Rooms().Keys()...)
 	r.data = details.Data()
-	r.operator = NewBroadcastOperator(adapter, types.NewSet[Room](Room(r.id)), nil, nil)
+	r.operator = NewBroadcastOperator(adapter, types.NewSet(string(r.id)), nil, nil)
 
 	return r
 }
@@ -271,12 +279,12 @@ func (r *RemoteSocket) Emit(ev string, args ...any) error {
 }
 
 // Joins a room.
-func (r *RemoteSocket) Join(room ...Room) {
+func (r *RemoteSocket) Join(room ...string) {
 	r.operator.SocketsJoin(room...)
 }
 
 // Leaves a room.
-func (r *RemoteSocket) Leave(room ...Room) {
+func (r *RemoteSocket) Leave(room ...string) {
 	r.operator.SocketsLeave(room...)
 }
 

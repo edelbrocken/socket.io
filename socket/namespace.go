@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/zishang520/engine.io/log"
-	"github.com/zishang520/engine.io/types"
+	"engine.io/log"
+	"engine.io/types"
 )
 
 var namespace_log = log.NewLog("socket.io:namespace")
@@ -133,17 +133,17 @@ func (n *Namespace) run(socket *Socket, fn func(err *ExtendedError)) {
 }
 
 // Targets a room when emitting.
-func (n *Namespace) To(room ...Room) *BroadcastOperator {
+func (n *Namespace) To(room ...string) *BroadcastOperator {
 	return NewBroadcastOperator(n.adapter, nil, nil, nil).To(room...)
 }
 
 // Targets a room when emitting.
-func (n *Namespace) In(room ...Room) *BroadcastOperator {
+func (n *Namespace) In(room ...string) *BroadcastOperator {
 	return NewBroadcastOperator(n.adapter, nil, nil, nil).In(room...)
 }
 
 // Excludes a room when emitting.
-func (n *Namespace) Except(room ...Room) *BroadcastOperator {
+func (n *Namespace) Except(room ...string) *BroadcastOperator {
 	return NewBroadcastOperator(n.adapter, nil, nil, nil).Except(room...)
 }
 
@@ -233,7 +233,7 @@ func (n *Namespace) _onServerSideEmit(ev string, args ...any) {
 }
 
 // Gets a list of clients.
-func (n *Namespace) AllSockets() (*types.Set[SocketId], error) {
+func (n *Namespace) AllSockets() (*types.Set, error) {
 	return NewBroadcastOperator(n.adapter, nil, nil, nil).AllSockets()
 }
 
@@ -273,12 +273,12 @@ func (n *Namespace) FetchSockets() ([]*RemoteSocket, error) {
 }
 
 // Makes the matching socket instances join the specified rooms
-func (n *Namespace) SocketsJoin(room ...Room) {
+func (n *Namespace) SocketsJoin(room ...string) {
 	NewBroadcastOperator(n.adapter, nil, nil, nil).SocketsJoin(room...)
 }
 
 // Makes the matching socket instances leave the specified rooms
-func (n *Namespace) SocketsLeave(room ...Room) {
+func (n *Namespace) SocketsLeave(room ...string) {
 	NewBroadcastOperator(n.adapter, nil, nil, nil).SocketsLeave(room...)
 }
 
